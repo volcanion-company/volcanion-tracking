@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/libs/">
+    <Project Path="src/VolcanionTracking.Application/VolcanionTracking.Application.csproj" />
+    <Project Path="src/VolcanionTracking.Domain/VolcanionTracking.Domain.csproj" />
+    <Project Path="src/VolcanionTracking.Infrastructure/VolcanionTracking.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/presentations/">
+    <Project Path="src/VolcanionTracking.API/VolcanionTracking.API.csproj" />
+  </Folder>
+</Solution>
