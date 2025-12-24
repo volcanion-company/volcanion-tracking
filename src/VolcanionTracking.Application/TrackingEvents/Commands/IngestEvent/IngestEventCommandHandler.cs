@@ -42,35 +42,31 @@ public class IngestEventCommandHandler : IRequestHandler<IngestEventCommand, Ing
 
         // Get partner system (cached)
         var cacheKey = $"partner_system:apikey:{request.ApiKey}";
-        var partnerSystem = await _cacheService.GetAsync<Guid?>(cacheKey, cancellationToken);
-        
-        if (partnerSystem == null)
-        {
-            var system = await _partnerSystemRepository.GetByApiKeyAsync(request.ApiKey, cancellationToken);
-            if (system == null)
-            {
-                throw new UnauthorizedAccessException("Invalid API key");
-            }
+        var partnerSystemStr = await _cacheService.GetAsync<string>(cacheKey, cancellationToken) ?? string.Empty;
+        var partnerSystem = Guid.Parse(partnerSystemStr);
 
+        if (partnerSystem == Guid.Empty)
+        {
+            var system = await _partnerSystemRepository.GetByApiKeyAsync(request.ApiKey, cancellationToken) ?? throw new UnauthorizedAccessException("Invalid API key");
             if (!system.IsActive)
             {
                 throw new InvalidOperationException("Partner system is not active");
             }
 
             partnerSystem = system.Id;
-            await _cacheService.SetAsync(cacheKey, partnerSystem, TimeSpan.FromHours(1), cancellationToken);
+            await _cacheService.SetAsync(cacheKey, partnerSystem.ToString(), TimeSpan.FromHours(1), cancellationToken);
         }
 
         // Validate event schema
         var (isValid, validationErrors) = await _validationService.ValidateEventAsync(
-            partnerSystem.Value,
+            partnerSystem,
             request.EventName,
             request.EventPropertiesJson,
             cancellationToken);
 
         // Create tracking event (append-only, never reject)
         var trackingEventResult = TrackingEvent.Create(
-            partnerSystem.Value,
+            partnerSystem,
             request.EventName,
             request.EventTimestamp,
             request.UserId,
