@@ -72,12 +72,13 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline
 app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<RequestDecryptionMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference();
+    // Scalar UI will be available automatically at /scalar/v1
 }
 
 app.UseHttpsRedirection();
