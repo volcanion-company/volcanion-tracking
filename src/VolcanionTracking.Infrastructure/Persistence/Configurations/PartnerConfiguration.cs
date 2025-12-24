@@ -15,6 +15,13 @@ public class PartnerConfiguration : IEntityTypeConfiguration<Partner>
         builder.Property(p => p.Id)
             .ValueGeneratedNever();
 
+        builder.Property(p => p.Code)
+            .IsRequired()
+            .HasMaxLength(50);
+
+        builder.HasIndex(p => p.Code)
+            .IsUnique();
+
         builder.Property(p => p.Name)
             .IsRequired()
             .HasMaxLength(200);
@@ -25,6 +32,18 @@ public class PartnerConfiguration : IEntityTypeConfiguration<Partner>
 
         builder.HasIndex(p => p.Email)
             .IsUnique();
+
+        builder.Property(p => p.AESKey)
+            .IsRequired()
+            .HasMaxLength(500);
+
+        builder.Property(p => p.RSAPublicKey)
+            .IsRequired()
+            .HasMaxLength(4000);
+
+        builder.Property(p => p.RSAPrivateKey)
+            .IsRequired()
+            .HasMaxLength(4000);
 
         builder.Property(p => p.IsActive)
             .IsRequired();

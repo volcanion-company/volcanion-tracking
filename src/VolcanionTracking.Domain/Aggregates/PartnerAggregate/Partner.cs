@@ -7,8 +7,12 @@ namespace VolcanionTracking.Domain.Aggregates.PartnerAggregate;
 /// </summary>
 public class Partner : AggregateRoot
 {
+    public string Code { get; private set; }
     public string Name { get; private set; }
     public string Email { get; private set; }
+    public string AESKey { get; private set; }
+    public string RSAPublicKey { get; private set; }
+    public string RSAPrivateKey { get; private set; }
     public bool IsActive { get; private set; }
     public DateTime? DeactivatedAt { get; private set; }
 
@@ -18,15 +22,22 @@ public class Partner : AggregateRoot
     // EF Core constructor
     private Partner() { }
 
-    private Partner(string name, string email)
+    private Partner(string code, string name, string email, string aesKey, string rsaPublicKey, string rsaPrivateKey)
     {
+        Code = code;
         Name = name;
         Email = email;
+        AESKey = aesKey;
+        RSAPublicKey = rsaPublicKey;
+        RSAPrivateKey = rsaPrivateKey;
         IsActive = true;
     }
 
-    public static Result<Partner> Create(string name, string email)
+    public static Result<Partner> Create(string code, string name, string email, string aesKey, string rsaPublicKey, string rsaPrivateKey)
     {
+        if (string.IsNullOrWhiteSpace(code))
+            return Result<Partner>.Failure("Partner code is required");
+
         if (string.IsNullOrWhiteSpace(name))
             return Result<Partner>.Failure("Partner name is required");
 
@@ -36,7 +47,16 @@ public class Partner : AggregateRoot
         if (!IsValidEmail(email))
             return Result<Partner>.Failure("Invalid email format");
 
-        var partner = new Partner(name, email);
+        if (string.IsNullOrWhiteSpace(aesKey))
+            return Result<Partner>.Failure("AES key is required");
+
+        if (string.IsNullOrWhiteSpace(rsaPublicKey))
+            return Result<Partner>.Failure("RSA public key is required");
+
+        if (string.IsNullOrWhiteSpace(rsaPrivateKey))
+            return Result<Partner>.Failure("RSA private key is required");
+
+        var partner = new Partner(code, name, email, aesKey, rsaPublicKey, rsaPrivateKey);
         partner.AddDomainEvent(new PartnerCreatedEvent(partner.Id, partner.Name));
         
         return Result<Partner>.Success(partner);
@@ -100,6 +120,25 @@ public class Partner : AggregateRoot
 
         Name = name;
         Email = email;
+        SetUpdatedAt();
+        
+        return Result.Success();
+    }
+
+    public Result UpdateEncryptionKeys(string aesKey, string rsaPublicKey, string rsaPrivateKey)
+    {
+        if (string.IsNullOrWhiteSpace(aesKey))
+            return Result.Failure("AES key is required");
+
+        if (string.IsNullOrWhiteSpace(rsaPublicKey))
+            return Result.Failure("RSA public key is required");
+
+        if (string.IsNullOrWhiteSpace(rsaPrivateKey))
+            return Result.Failure("RSA private key is required");
+
+        AESKey = aesKey;
+        RSAPublicKey = rsaPublicKey;
+        RSAPrivateKey = rsaPrivateKey;
         SetUpdatedAt();
         
         return Result.Success();

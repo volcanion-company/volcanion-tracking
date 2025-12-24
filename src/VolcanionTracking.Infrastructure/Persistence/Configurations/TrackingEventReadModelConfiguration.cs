@@ -77,8 +77,5 @@ public class TrackingEventReadModelConfiguration : IEntityTypeConfiguration<Trac
         builder.HasIndex(te => new { te.PartnerId, te.EventTimestamp });
         builder.HasIndex(te => new { te.PartnerSystemId, te.EventTimestamp });
         builder.HasIndex(te => new { te.EventName, te.EventTimestamp });
-
-        // Ignore domain events
-        builder.Ignore(te => te.DomainEvents);
     }
 }

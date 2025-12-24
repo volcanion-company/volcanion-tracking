@@ -35,8 +35,22 @@ public class CreatePartnerCommandHandler : IRequestHandler<CreatePartnerCommand,
             throw new InvalidOperationException($"Partner with email {request.Email} already exists");
         }
 
+        // Check if partner with code already exists
+        var partners = await _partnerRepository.GetAllAsync(cancellationToken);
+        if (partners.Any(p => p.Code == request.Code))
+        {
+            throw new InvalidOperationException($"Partner with code {request.Code} already exists");
+        }
+
         // Create partner aggregate
-        var partnerResult = Partner.Create(request.Name, request.Email);
+        var partnerResult = Partner.Create(
+            request.Code,
+            request.Name,
+            request.Email,
+            request.AESKey,
+            request.RSAPublicKey,
+            request.RSAPrivateKey);
+            
         if (!partnerResult.IsSuccess)
         {
             throw new InvalidOperationException(partnerResult.Error);
@@ -52,9 +66,11 @@ public class CreatePartnerCommandHandler : IRequestHandler<CreatePartnerCommand,
 
         // Invalidate cache
         await _cacheService.RemoveByPrefixAsync("partners:", cancellationToken);
+        await _cacheService.RemoveByPrefixAsync("partner:", cancellationToken);
 
         return new CreatePartnerResult(
             partner.Id,
+            partner.Code,
             partner.Name,
             partner.Email,
             partner.IsActive);

@@ -5,10 +5,4 @@
     <project path="src\VolcanionTracking.Infrastructure\VolcanionTracking.Infrastructure.csproj" />
     <project path="src\VolcanionTracking.API\VolcanionTracking.API.csproj" />
   </folder>
-  <folder name="tests">
-    <project path="tests\VolcanionTracking.Domain.Tests\VolcanionTracking.Domain.Tests.csproj" />
-    <project path="tests\VolcanionTracking.Application.Tests\VolcanionTracking.Application.Tests.csproj" />
-    <project path="tests\VolcanionTracking.Infrastructure.Tests\VolcanionTracking.Infrastructure.Tests.csproj" />
-    <project path="tests\VolcanionTracking.API.Tests\VolcanionTracking.API.Tests.csproj" />
-  </folder>
 </solution>

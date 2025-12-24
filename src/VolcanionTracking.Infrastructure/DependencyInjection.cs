@@ -45,6 +45,8 @@ public static class DependencyInjection
         // Services
         services.AddScoped<ICacheService, CacheService>();
         services.AddScoped<IEventValidationService, EventValidationService>();
+        services.AddScoped<IEncryptionService, EncryptionService>();
+        services.AddScoped<IRequestDecryptionService, RequestDecryptionService>();
 
         return services;
     }

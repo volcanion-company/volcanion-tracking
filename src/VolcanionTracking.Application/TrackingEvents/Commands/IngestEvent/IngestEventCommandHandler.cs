@@ -42,9 +42,10 @@ public class IngestEventCommandHandler : IRequestHandler<IngestEventCommand, Ing
 
         // Get partner system (cached)
         var cacheKey = $"partner_system:apikey:{request.ApiKey}";
-        var partnerSystem = await _cacheService.GetAsync<Guid?>(cacheKey, cancellationToken);
+        var cachedSystemIdStr = await _cacheService.GetAsync<string>(cacheKey, cancellationToken);
+        Guid partnerSystemId;
         
-        if (partnerSystem == null)
+        if (cachedSystemIdStr == null || !Guid.TryParse(cachedSystemIdStr, out partnerSystemId))
         {
             var system = await _partnerSystemRepository.GetByApiKeyAsync(request.ApiKey, cancellationToken);
             if (system == null)
@@ -57,27 +58,27 @@ public class IngestEventCommandHandler : IRequestHandler<IngestEventCommand, Ing
                 throw new InvalidOperationException("Partner system is not active");
             }
 
-            partnerSystem = system.Id;
-            await _cacheService.SetAsync(cacheKey, partnerSystem, TimeSpan.FromHours(1), cancellationToken);
+            partnerSystemId = system.Id;
+            await _cacheService.SetAsync(cacheKey, partnerSystemId.ToString(), TimeSpan.FromHours(1), cancellationToken);
         }
 
         // Validate event schema
-        var (isValid, validationErrors) = await _validationService.ValidateEventAsync(
-            partnerSystem.Value,
+        var validationResult = await _validationService.ValidateEventAsync(
+            partnerSystemId,
             request.EventName,
             request.EventPropertiesJson,
             cancellationToken);
 
         // Create tracking event (append-only, never reject)
         var trackingEventResult = TrackingEvent.Create(
-            partnerSystem.Value,
+            partnerSystemId,
             request.EventName,
             request.EventTimestamp,
             request.UserId,
             request.AnonymousId,
             request.EventPropertiesJson,
-            isValid,
-            validationErrors,
+            validationResult.IsValid,
+            validationResult.Errors,
             request.CorrelationId);
 
         if (!trackingEventResult.IsSuccess)
@@ -97,12 +98,12 @@ public class IngestEventCommandHandler : IRequestHandler<IngestEventCommand, Ing
             "Event ingested: {EventId} in {ElapsedMs}ms, Valid: {IsValid}", 
             trackingEvent.Id,
             stopwatch.ElapsedMilliseconds,
-            isValid);
+            validationResult.IsValid);
 
         return new IngestEventResult(
             trackingEvent.Id,
-            isValid,
-            validationErrors,
+            validationResult.IsValid,
+            validationResult.Errors,
             DateTime.UtcNow);
     }
 }
